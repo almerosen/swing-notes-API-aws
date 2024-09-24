@@ -1,16 +1,93 @@
-# "org" ensures this Service is used with the correct Serverless Framework Access Key.
 org: almerosen
-# "service" is the name of this project. This will also be added to your AWS resource names.
 service: swing-notes-API
 
 provider:
   name: aws
   runtime: nodejs20.x
+  region: eu-north-1
+  environment:
+    JWT_SECRET_KEY: superhemlig_nyckel
+  iam:
+    role: arn:aws:iam::235494790392:role/lecture-role
 
 functions:
-  hello:
-    handler: handler.hello
+  GetAllNotes:
+    handler: functions/GetAllNotes/index.handler
     events:
       - httpApi:
-          path: /
+          path: /api/notes
           method: get
+
+  CreateNote:
+    handler: functions/CreateNote/index.handler
+    events:
+      - httpApi:
+          path: /api/notes
+          method: post
+
+  UpdateNote:
+    handler: functions/UpdateNote/index.handler
+    events:
+      - httpApi:
+          path: /api/notes/{id}
+          method: put
+
+  DeleteNote:
+    handler: functions/DeleteNote/index.handler
+    events:
+      - httpApi:
+          path: /api/notes/{id}
+          method: delete
+
+  CreateAccount:
+    handler: functions/CreateAccount/index.handler
+    events:
+      - httpApi:
+          path: /api/user/signup
+          method: post
+
+  Login:
+    handler: functions/Login/index.handler
+    events:
+      - httpApi:
+          path: /api/user/login
+          method: post
+
+resources:
+  Resources:
+    SwingNotesAPIUsers:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: SwingNotesAPI_Users
+        AttributeDefinitions:
+          - AttributeName: "userId"
+            AttributeType: "S"
+          - AttributeName: "email"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "userId"
+            KeyType: HASH
+        BillingMode: PAY_PER_REQUEST
+        GlobalSecondaryIndexes:
+          - IndexName: emailIndex
+            KeySchema:
+              - AttributeName: email
+                KeyType: HASH
+            Projection:
+              ProjectionType: "ALL"
+
+    SwingNotesAPINotes:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        TableName: SwingNotesAPI_Notes
+        AttributeDefinitions:
+          - AttributeName: "userId"
+            AttributeType: "S"
+          - AttributeName: "noteId"
+            AttributeType: "S"
+        KeySchema:
+          - AttributeName: "userId"
+            KeyType: HASH
+          - AttributeName: "noteId"
+            KeyType: RANGE
+        BillingMode: PAY_PER_REQUEST
