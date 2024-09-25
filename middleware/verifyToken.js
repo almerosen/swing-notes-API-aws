@@ -15,6 +15,9 @@ export const validateToken = {
             const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY)
 
             request.event.user = decodedToken
+
+            return request.response
+            
         } catch (error) {
             console.error("Error:", error)
             return sendError(401, { message: "Invalid or expired token", error: error.message})

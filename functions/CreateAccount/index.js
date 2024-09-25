@@ -1,7 +1,18 @@
 import { db } from '../../services/db.js';
 import { v4 as uuidv4 } from 'uuid';
 import bcrypt from "bcryptjs";
+import { getUser } from '../../utils/getUser.js';
 import { sendResponse, sendError } from '../../responses/index.js';
+
+
+
+const hashPassword = async (password) => {
+    const hashedPassword = await bcrypt.hash(password, 10)
+
+    return hashedPassword
+}
+
+
 
 export const handler = async (event) => {
     console.log(event)
@@ -13,28 +24,20 @@ export const handler = async (event) => {
             return sendError(400, { message: "Pleave provide both email and password" })
         }
 
-        const existingUser = await db.query({
-            TableName: "SwingNotesAPI_Users",
-            IndexName: "emailIndex",
-            KeyConditionExpression: "email = :email",
-            ExpressionAttributeValues: {
-                ":email": email
-            } 
-        })
-        console.log("existingUser:", existingUser)
+        // Check if email already exists
+        const existingUser = await getUser(email)
 
-        if (existingUser.Items.length > 0) {
-            return sendError(400, { message: "Email already exists" } )
+        if (existingUser) {
+            return sendError(400, { message: "Email already exists" })
         }
 
-        const saltRounds = 10
-        const hashedPassword = await bcrypt.hash(password, saltRounds)
+        const hashedPassword = await hashPassword(password)
+        // const hashedPassword = await bcrypt.hash(password, 10)
 
-        const userId = uuidv4()
         const user = {
-            userId: userId,
-            email: email,
-            hashedPassword: hashedPassword,
+            userId: uuidv4(),
+            email,
+            hashedPassword,
             createdAt: new Date().toISOString()
         }
 
@@ -43,7 +46,7 @@ export const handler = async (event) => {
             Item: user
         })
 
-        return sendResponse(200, { message: "User account created successfully", userId })
+        return sendResponse(200, { message: "User account created successfully", user: user.userId })
 
     } catch (error) {
         console.error(error)

@@ -15,6 +15,12 @@ export const handler = middy()
             if ( !title || !text) {
                 return sendError(400, { message: "Please provide title and text" });
             }
+
+            if (title.length > 50) return sendError(500, { message: "Title can max be 50 characters" })
+
+            if (text.length > 300) return sendError(400, { message: "text can be max 300 characters long" })
+
+
     
             await db.put({
                 TableName: "SwingNotesAPI_Notes",

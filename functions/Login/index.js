@@ -1,7 +1,20 @@
 import { sendError, sendResponse } from "../../responses/index.js"
+import { getUser } from "../../utils/getUser.js"
 import { db } from "../../services/db.js"
 import bcrypt from "bcryptjs"
 import jwt from 'jsonwebtoken'
+
+
+const passwordCheck = async (password, user) => {
+    const correctPassword = await bcrypt.compare(password, user.hashedPassword)
+
+    return correctPassword
+}
+
+const signToken = async (user) => {
+    const token = jwt.sign({ userId: user.userId, email: user.email }, process.env.JWT_SECRET_KEY, { expiresIn: "1h" })
+    return token
+}
 
 
 export const handler = async (event) => {
@@ -15,34 +28,20 @@ export const handler = async (event) => {
             return sendError(400, { message: "Please provide both email and password" })
         }
 
-        const existingUser = await db.query({
-            TableName: "SwingNotesAPI_Users",
-            IndexName: "emailIndex",
-            KeyConditionExpression: "email = :email",
-            ExpressionAttributeValues: {
-                ":email": email
-            }
-        })
-        console.log("existingUser:", existingUser)
+        // Get user from database
+        const user = await getUser(email)
 
-        const user = existingUser.Items[0]
-        console.log("user:", user)
-
-        // If user does not exist
-        if (!user) {
-            return sendError(400, { message: "User does not exist" })
-        }
-
+        if (!user) return sendError(400, { message: "User (email) does not exist" })
+        
         // Compare passwords
-        const passwordMatch = await bcrypt.compare(password, user.hashedPassword)
-        if (!passwordMatch) {
+        const correctPassword = await passwordCheck(password, user)
+
+        if (!correctPassword) {
             return sendError(400, { message: "Invalid password or email" })
         }
-        console.log("passwordMatch:", passwordMatch)
 
         // Generate token
-        const token = jwt.sign({ userId: user.userId, email: user.email }, process.env.JWT_SECRET_KEY, { expiresIn: "1h" })
-        console.log("token:", token)
+        const token = await signToken(user)
 
         return sendResponse(200, { message: "Login successfull", userId: user.userId, token })
 
