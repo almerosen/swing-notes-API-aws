@@ -53,21 +53,31 @@ const updateTodo = async (event) => {
         // Update:
         let updateExpressions = []
         let expressionAttributeValues = {}
-        let epressionAttributeNames = {}
+        let expressionAttributeNames = {}
     
         if (title && title !== note.title) {
             updateExpressions.push("#title = :title")
             expressionAttributeValues[":title"] = title
-            epressionAttributeNames["#title"] = "title"
+            expressionAttributeNames["#title"] = "title"
         }
     
         if (text && text !== note.text) {
             updateExpressions.push("#text = :text")
             expressionAttributeValues[":text"] = text
-            epressionAttributeNames["#text"] = "text"
+            expressionAttributeNames["#text"] = "text"
         }
+
+        console.log("updateExpressions:", updateExpressions)
     
         if (updateExpressions.length === 0) return sendError(400, { message: "Nothing to update" })
+
+        // If any values have changed, pass in modifiedAt to the note 
+        if (updateExpressions.length > 0) {
+            const modifiedAt = new Date().toISOString()
+            updateExpressions.push("#modifiedAt = :modifiedAt")
+            expressionAttributeValues[":modifiedAt"] = modifiedAt
+            expressionAttributeNames["#modifiedAt"] = "modifiedAt"
+        }
     
         const updateExpression = "SET " + updateExpressions.join(", ")
     
@@ -79,7 +89,7 @@ const updateTodo = async (event) => {
             },
             UpdateExpression: updateExpression,
             ExpressionAttributeValues: expressionAttributeValues,
-            ExpressionAttributeNames: epressionAttributeNames,
+            ExpressionAttributeNames: expressionAttributeNames,
             modifiedAt: new Date().toISOString(),
             ReturnValues: "UPDATED_NEW"
         })
