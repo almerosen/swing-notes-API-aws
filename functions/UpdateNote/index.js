@@ -8,7 +8,7 @@ const updateTodo = async (event) => {
 
     try {
         const { id } = event.pathParameters
-        const { userId } = event.user
+        const { userId } = event.requestContext.authorizer
     
         const body = JSON.parse(event.body)
     
@@ -80,6 +80,7 @@ const updateTodo = async (event) => {
             UpdateExpression: updateExpression,
             ExpressionAttributeValues: expressionAttributeValues,
             ExpressionAttributeNames: epressionAttributeNames,
+            modifiedAt: new Date().toISOString(),
             ReturnValues: "UPDATED_NEW"
         })
     

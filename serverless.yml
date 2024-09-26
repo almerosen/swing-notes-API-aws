@@ -11,11 +11,11 @@ provider:
     role: arn:aws:iam::235494790392:role/lecture-role
 
 functions:
-  GetAllNotes:
-    handler: functions/GetAllNotes/index.handler
+  GetAllNotesByUser:
+    handler: functions/GetAllNotesByUser/index.handler
     events:
       - httpApi:
-          path: /api/notes
+          path: /api/notes/user/notes
           method: get
 
   CreateNote:

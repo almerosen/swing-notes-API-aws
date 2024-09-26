@@ -14,7 +14,11 @@ export const validateToken = {
 
             const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY)
 
-            request.event.user = decodedToken
+            // request.event.user = decodedToken
+            request.event.requestContext.authorizer = {
+                userId: decodedToken.userId,
+                email: decodedToken.email
+            }
 
             return request.response
             
