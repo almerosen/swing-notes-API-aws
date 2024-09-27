@@ -23,6 +23,10 @@ const deleteNote = async (event) => {
 
         const returnResponse = deletedNote.Attributes
 
+        if (!returnResponse) {
+            return sendError(404, "Note not found or already deleted" )
+        }
+
         return sendResponse(200, { message: "Note deleted successfully", returnResponse})
 
     } catch (error) {
